@@ -1,0 +1,21 @@
+---
+router01:
+  hostname: 10.1.1.1
+  username: foo
+  password: bar
+  groups:
+    - routeros
+
+router02:
+  hostname: 192.168.1.1
+  username: foo
+  password: bar
+  groups:
+    - routeros
+
+switch01:
+  hostname: 192.168.1.2
+  username: foo
+  password: bar
+  groups:
+    - swos

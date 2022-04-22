@@ -1,0 +1,11 @@
+---
+routeros:
+  platform: ros
+  port: 8728
+  connection_options:
+    routerosapi:
+      extras:
+        use_ssl: False
+
+swos:
+  platform: swos
