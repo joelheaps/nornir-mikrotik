@@ -3,3 +3,4 @@ config.py
 geckodriver.log
 nornir.log
 hosts.yaml
+__pycache__
