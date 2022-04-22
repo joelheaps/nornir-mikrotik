@@ -186,3 +186,26 @@ def get_vlans(task: Task) -> Result:
         host=task.host,
         result=vlans,
     )
+
+def get_config(task: Task) -> Result:
+    '''
+    Returns the configuration of the device.
+    '''
+    result = task.run(
+        task=ssh_command,
+        command='/export verbose'
+    )
+
+    # Parse the result to get the config
+    config = result.result
+
+    # Remove lines that start with '#'
+    config = '\n'.join([line for line in config.split('\n') if not line.startswith('#')])
+
+    # Save the config in the host's data dictionary
+    task.host['config'] = config
+
+    return Result(
+        host=task.host,
+        result=config,
+    )

@@ -1,5 +1,6 @@
 """
-This script gets the full configuration of the routeros device and saves it to a file.
+This script gets the full configuration of the routeros device,
+saves it to a git repository, makes a commit, and pushes the changes to the remote repository.
 """
 
 import sys
@@ -10,26 +11,66 @@ from nornir_routeros.plugins.tasks import *
 import subprocess
 from config import *
 from nr_routeros_general import *
+import datetime
 
-def get_config(task: Task) -> Result:
+def find_config_and_commit(task: Task) -> Result:
     '''
-    Returns the configuration of the device.
+    Saves the configuration to a file and commits it to the git repository.
+    Store config temporarily in CONFIGS_DIR/staging.  If the config is different than
+    the old config, move it to CONFIGS_DIR and make a commit.
     '''
-    result = task.run(
-        task=ssh_command,
-        command='/export verbose'
-    )
+    # Get the config.  If the config is None or empty, return an error.
+    try:
+        result = task.run(
+            task=get_config,
+        )
+        print_result(result)
 
-    # Parse the result to get the config
-    config = result.result
+        config = result.result
 
-    # Remove lines that start with '#'
-    config = '\n'.join([line for line in config.split('\n') if not line.startswith('#')])
+        if config is None or config == '':
+            raise Exception('config is empty')
+
+    except Exception as e:
+        print(f'{task.host} failed to get config: {e}')
+        return Result(
+            host=task.host,
+            result=None,
+        )
+
+    # Save the config to a file in the CONFIGS_DIR/staging directory
+    with open(f'{CONFIGS_DIR}/staging/{task.host.name}.rsc', 'w') as f:
+        f.write(result.result)
+
+    # Read the old config from the CONFIGS_DIR directory. Check if the file exists first.
+    try:
+        with open(f'{CONFIGS_DIR}/{task.host.name}.rsc', 'r') as f:
+            old_config = f.read()
+    except FileNotFoundError:
+        old_config = ''
+
+    # Compare the new config with the old config. If they are different, move the new config to the CONFIGS_DIR directory
+    # and make a commit.
+    if result.result != old_config:
+        # Get current date and time in a readable format
+        now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+
+        # Move the new config to the CONFIGS_DIR directory
+        subprocess.run(f'mv {CONFIGS_DIR}/staging/{task.host.name}.rsc {CONFIGS_DIR}/{task.host.name}.rsc', shell=True)
+
+        # Make a commit
+        subprocess.run(f'cd {CONFIGS_DIR} && git add {task.host.name}.rsc && git commit -m "config updated on {task.host.name} at {now}"', shell=True)
 
     return Result(
         host=task.host,
         result=config,
     )
+
+def push_config():
+    '''
+    Push config from local master to remote origin repository.
+    '''
+    subprocess.run(f'cd {CONFIGS_DIR} && git push origin master', shell=True)
 
 def main():
     # initialize Nornir
@@ -52,18 +93,16 @@ def main():
     print_result(result)
 
     result = nr.run(
-        task=get_config,
+        task=find_config_and_commit,
     )
     print_result(result)
 
-    # For each host in the result, save the config to a file
-    for host in result.keys():
-        # Get the config
-        config = result[host].result
-
-        # Save the config to a file in the CONF_DIR directory
-        with open(f'{CONFIGS_DIR}/{host}.conf', 'w') as f:
-            f.write(config)
+    # Push config to remote repository
+    try:
+        push_config()
+        print('config pushed to remote repository')
+    except Exception as e:
+        print(f'failed to push config: {e}')
 
 if __name__ == "__main__":
     main()
