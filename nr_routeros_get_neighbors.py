@@ -8,7 +8,7 @@ from nornir import InitNornir
 from nornir.core.task import Task, Result
 from nornir_utils.plugins.functions import print_result
 from nornir_routeros.plugins.tasks import *
-from nr_mikrotik_general import *
+from nr_routeros_general import *
 from shlex import shlex
 import logging
 import json

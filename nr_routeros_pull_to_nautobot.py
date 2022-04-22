@@ -9,9 +9,8 @@ from nornir import InitNornir
 from nornir.core.task import Task, Result
 from nornir_utils.plugins.functions import print_result
 from nornir_routeros.plugins.tasks import *
-from nr_mikrotik_baseline import get_ros_version
 from config import *
-from nr_mikrotik_general import *
+from nr_routeros_general import *
 from pynautobot import api
 import logging
 

@@ -9,7 +9,7 @@ from nornir.core.task import Task, Result
 from nornir_utils.plugins.functions import print_result
 from nornir_routeros.plugins.tasks import routeros_config_item
 from nornir_routeros.plugins.tasks import routeros_command
-from nr_mikrotik_general import *
+from nr_routeros_general import *
 import datetime
 
 def set_update_branch(task: Task) -> Result:
