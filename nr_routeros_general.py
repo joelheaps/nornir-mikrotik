@@ -203,9 +203,9 @@ def get_config(task: Task) -> Result:
     config = '\n'.join([line for line in config.split('\n') if not line.startswith('#')])
 
     # Save the config in the host's data dictionary
-    task.host['config'] = config
+    task.host.data['config'] = config
 
     return Result(
         host=task.host,
-        result=config,
+        result=f'Successfully retrieved config for {task.host.name}',
     )

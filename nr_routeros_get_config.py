@@ -26,7 +26,7 @@ def find_config_and_commit(task: Task) -> Result:
         )
         print_result(result)
 
-        config = result.result
+        config = task.host.data['config']
 
         if config is None or config == '':
             raise Exception('config is empty')
@@ -40,7 +40,7 @@ def find_config_and_commit(task: Task) -> Result:
 
     # Save the config to a file in the CONFIGS_DIR/staging directory
     with open(f'{CONFIGS_DIR}/staging/{task.host.name}.rsc', 'w') as f:
-        f.write(result.result)
+        f.write(config)
 
     # Read the old config from the CONFIGS_DIR directory. Check if the file exists first.
     try:
@@ -51,7 +51,7 @@ def find_config_and_commit(task: Task) -> Result:
 
     # Compare the new config with the old config. If they are different, move the new config to the CONFIGS_DIR directory
     # and make a commit.
-    if result.result != old_config:
+    if config != old_config:
         # Get current date and time in a readable format
         now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
 
@@ -63,7 +63,7 @@ def find_config_and_commit(task: Task) -> Result:
 
     return Result(
         host=task.host,
-        result=config,
+        result=f'Successfully committed config for {task.host.name}',
     )
 
 def push_config():
@@ -81,21 +81,25 @@ def main():
 
     # If target is 'all', continue. Otherwise, filter the inventory using target as a hostname
     if target == 'all':
-        pass
+        nr = nr.filter(F(groups__contains='routeros'))
     else:
         nr = nr.filter(name=target).filter(F(groups__contains='routeros'))
         print(f'filtered inventory to {target}')
 
     # Run tasks
-    result = nr.run(
+    ros_version_result = nr.run(
         task=get_ros_version,
     )
-    print_result(result)
+    print_result(ros_version_result)
 
-    result = nr.run(
+    config_result = nr.run(
         task=find_config_and_commit,
     )
-    print_result(result)
+    print_result(config_result)
+
+    # Print a bulleted list of hosts for which tasks failed
+    for host in ros_version_result.failed_hosts:
+        print(f'- {host}: failed to connect or get ROS version')
 
     # Push config to remote repository
     try:

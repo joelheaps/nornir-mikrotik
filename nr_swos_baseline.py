@@ -30,7 +30,12 @@ def configure_snmp(task: Task) -> Result:
     try:
         # Send debug message to log file
         logging.debug(f"Opening webdriver {task.host.name}")
-        wdriver = webdriver.Firefox()
+
+        # Set firefox to run in headless mode
+        firefox_options = webdriver.firefox.options.Options()
+        firefox_options.headless = True
+
+        wdriver = webdriver.Firefox(options=firefox_options)
         wdriver.implicitly_wait(5)
         wdriver.get(f'http://{task.host.username}:{task.host.password}@{task.host.hostname}/index.html#snmp')
     except Exception as e:
