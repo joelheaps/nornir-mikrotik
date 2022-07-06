@@ -12,7 +12,9 @@ from nornir.core.filter import F
 from config import *
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
 import logging
+from time import sleep
 
 logging.basicConfig(filename='logs/nr_swos_snmp.log', level=logging.DEBUG)
 
@@ -30,7 +32,6 @@ def upgrade_firmware(task: Task) -> Result:
         wdriver.implicitly_wait(5)
         wdriver.get(f'http://{task.host.username}:{task.host.password}@{task.host.hostname}/index.html#upgrade')
     except Exception as e:
-        
         # Send debug message to log file
         logging.debug(f"Failed to open webdriver {task.host.name}. Error: {e}")
         return Result(
@@ -43,11 +44,12 @@ def upgrade_firmware(task: Task) -> Result:
         # Send debug output to the log file
         logging.debug(f' on {task.host.name}')
 
-        apply_button = wdriver.find_element(By.XPATH, '/html/body/table/tbody/tr[3]/td/div/table[1]/tbody[2]/tr[3]/td/div/a')
-        apply_button.click()
+        upgrade_button = wdriver.find_element(By.LINK_TEXT, 'Download & Upgrade')
+        upgrade_button.click()
 
         # Wait for the upgrade to complete
-        wdriver.implicitly_wait(60)
+        sleep(60)
+
     except Exception as e:
         logging.error(f'Error beginning upgrade on {task.host.name}: {e}')
         return Result(
